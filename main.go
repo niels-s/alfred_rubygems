@@ -9,6 +9,8 @@ import (
 	"os"
 )
 
+const rubyGemsUrl = "https://rubygems.org/api/v1/search.json?query=%s"
+
 type gem struct {
 	XMLName    xml.Name `xml:"item"`
 	Name       string   `xml:"title"`
@@ -16,6 +18,7 @@ type gem struct {
 	Info       string   `xml:"subtitle"`
 	Icon       string
 }
+
 type gemResults struct {
 	XMLName xml.Name `xml:"items"`
 	Gems    []gem
@@ -25,12 +28,11 @@ func main() {
 	searchString := flag.String("search", "", "This is the gem your searching for")
 	flag.Parse()
 
-	url := fmt.Sprintf("http://rubygems.org/api/v1/search.json?query=%s", *searchString)
+	url := fmt.Sprintf(rubyGemsUrl, *searchString)
 
 	resp, err_conn := http.Get(url)
 	if err_conn != nil {
 		outputError(url)
-		//fmt.Println("Something happened when trying to query ruby gems: ", err_conn)
 		return
 	}
 
@@ -39,7 +41,6 @@ func main() {
 	err_decode := dec.Decode(&json)
 	if err_decode != nil {
 		outputError(url)
-		//fmt.Println("Error occured when trying to decode json body: ", err_decode)
 		return
 	}
 
