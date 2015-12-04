@@ -9,14 +9,25 @@ import (
 	"os"
 )
 
-const rubyGemsUrl = "https://rubygems.org/api/v1/search.json?query=%s"
+const (
+	rubyGemsUrl = "https://rubygems.org/api/v1/search.json?query=%s"
+	noGemFound  = "No gem found"
+	oops        = "Oops..."
+	icon        = "icon.png"
+	cmdMod      = "cmd"
+)
 
 type gem struct {
-	XMLName    xml.Name `xml:"item"`
-	Name       string   `xml:"title"`
-	ProjectUri string   `xml:"arg,attr"`
-	Info       string   `xml:"subtitle"`
+	XMLName    xml.Name   `xml:"item"`
+	Name       string     `xml:"title"`
+	ProjectUri string     `xml:"arg,attr"`
+	Subtitles  []subtitle `xml:"subtitle"`
 	Icon       string
+}
+
+type subtitle struct {
+	Mod     string `xml:"mod,attr,omitempty"`
+	Content string `xml:",chardata"`
 }
 
 type gemResults struct {
@@ -62,7 +73,7 @@ func outputError(url string) {
 }
 
 func createErrorGemResponse(url string) []gem {
-	return []gem{gem{Name: "Oops...", Info: "No gem found", ProjectUri: url, Icon: "icon.png"}}
+	return []gem{gem{Name: oops, Subtitles: []subtitle{{Content: noGemFound}}, ProjectUri: url, Icon: icon}}
 }
 
 func outputXML(gems []gem) {
@@ -76,10 +87,15 @@ func outputXML(gems []gem) {
 }
 
 func convertJsonToGem(input map[string]interface{}) gem {
+	subttitles := []subtitle{
+		{Content: fmt.Sprintf("%s, Version: %s", input["info"].(string), input["version"].(string))},
+		{Mod: cmdMod, Content: input["homepage_uri"].(string)},
+	}
+
 	return gem{
 		Name:       input["name"].(string),
 		ProjectUri: input["project_uri"].(string),
-		Info:       fmt.Sprintf("%s, Version: %s", input["info"].(string), input["version"].(string)),
-		Icon:       "icon.png",
+		Subtitles:  subttitles,
+		Icon:       icon,
 	}
 }
